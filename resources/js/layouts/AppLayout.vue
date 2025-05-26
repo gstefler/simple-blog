@@ -1,18 +1,59 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItemType } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { User } from '@/types';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button';
 
 interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
+    title?: string;
 }
 
-withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
-});
+defineProps<Props>()
+
+const page = usePage()
+
+const user = computed<User | null>(() => (page.props as any).auth.user as User | null);
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <header class="">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">{{ title || 'App Layout' }}</h1>
+            <DropdownMenu v-if="user">
+                <DropdownMenuTrigger>
+                    <Avatar class="cursor-pointer">
+                        <AvatarFallback>
+                            {{ user.name ? user.name.charAt(0).toUpperCase() : 'U' }}
+                        </AvatarFallback>
+                    </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem>
+                        <Link :href="route('logout')" as="button" method="post" class="font-medium">
+                            Logout
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <Button as-child v-else >
+                <Link :href="route('login')" as="button"  class="font-medium">
+                    Login
+                </Link>
+            </Button>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-8">
         <slot />
-    </AppLayout>
+    </main>
 </template>
+
+<style scoped>
+
+</style>
