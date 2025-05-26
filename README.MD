@@ -8,6 +8,7 @@ In the root directory of the project, run the following command:
 ```bash
 docker compose up -d
 ```
+The app will be avaliable shortly on http://localhost:8000
 
 Note: The seeder runs with each container restart. Multiple runs fail because of duplicate entries. If you want to run the seeder again:
 ```bash
