@@ -53,6 +53,7 @@ export interface Comment {
     user_id: string;
     user?: User;
     post?: Post;
+    can_delete: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -68,6 +69,8 @@ export interface PaginationData<T> {
         label: string;
         active: boolean;
     }[];
+    next_page_url: string | null;
+    prev_page_url: string | null;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

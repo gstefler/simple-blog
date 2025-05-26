@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
-use App\Models\Comment;
+use App\Http\Requests\PostRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -21,10 +19,20 @@ class PostController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Post::with('user:id,name')->latest();
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+        $posts = $query->paginate(10)->withQueryString();
+
         return Inertia::render('Posts/Index', [
-            'posts' => Post::with('user:id,name')->latest()->paginate(10),
+            'posts'   => $posts,
+            'filters' => $request->only('search'),
         ]);
     }
 
@@ -33,7 +41,7 @@ class PostController extends Controller implements HasMiddleware
         return Inertia::render('Posts/Create');
     }
 
-    public function store(StorePostRequest $request)
+    public function store(PostRequest $request)
     {
         $request->user()->posts()->create($request->validated());
 
@@ -43,7 +51,13 @@ class PostController extends Controller implements HasMiddleware
     public function show(Post $post)
     {
         return Inertia::render('Posts/Show', [
-            'post' => $post->load('user:id,name', 'comments.user:id,name'),
+            'post' => $post->load([
+                'user:id,name',
+                'comments' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                },
+                'comments.user:id,name',
+            ]),
             'can' => [
                 'update' => Gate::allows('update', $post),
                 'delete' => Gate::allows('delete', $post),
@@ -55,11 +69,11 @@ class PostController extends Controller implements HasMiddleware
     {
         Gate::authorize('update', $post);
         return Inertia::render('Posts/Edit', [
-            'post' => $post,
+            'post' => $post->only(['id', 'title', 'content']),
         ]);
     }
 
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(PostRequest $request, Post $post)
     {
         Gate::authorize('update', $post);
         $post->update($request->validated());
@@ -73,30 +87,5 @@ class PostController extends Controller implements HasMiddleware
         $post->delete();
 
         return redirect()->route('posts.index')->with('success', 'Post deleted successfully.');
-    }
-
-    public function storeComment(Request $request, Post $post) // Consider creating a StoreCommentRequest
-    {
-        $validated = $request->validate([
-            'content' => ['required', 'string'],
-        ]);
-
-        $comment = new Comment($validated);
-        $comment->post()->associate($post);
-        if ($request->user()) {
-            $comment->user()->associate($request->user());
-        }
-        $comment->save();
-
-        return redirect()->route('posts.show', $post)->with('success', 'Comment added successfully.');
-    }
-
-    public function destroyComment(Comment $comment)
-    {
-        Gate::authorize('delete', $comment);
-        $post = $comment->post;
-        $comment->delete();
-
-        return redirect()->route('posts.show', $post)->with('success', 'Comment deleted successfully.');
     }
 }

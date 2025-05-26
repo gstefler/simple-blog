@@ -15,7 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
+        User::factory()->admin()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@test',
+        ]);
 
         User::factory(25)->create()->each(function (User $user) {
             $numberOfPosts = rand(1, 5);
