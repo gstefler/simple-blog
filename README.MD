@@ -15,3 +15,10 @@ docker compose down
 docker compose up -d
 ```
 Just remove the container and start it again.
+
+# Features
+- A fully functional Laravel project, adhering to the specifications
+- Inertia.js with Vue.js frontend (Shadcn and Tailwind CSS)
+- Authorization with Gates
+- Admin user (email: admin@test pw: password)
+- Docerized running Laravel Octane and MariaDB
